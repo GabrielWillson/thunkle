@@ -56,6 +56,8 @@
   .daily-btn:hover:not(:disabled) { background: #c8c4bc; }
 }
 
+html, body { overflow-x: hidden; max-width: 100%; }
+
 body {
   background: var(--bg);
   min-height: 100vh;
@@ -66,7 +68,23 @@ body {
   padding: 20px 12px 40px;
   color: var(--ink);
   font-size: 17px;
+  -webkit-text-size-adjust: 100%;
 }
+
+/* iOS Safari sizing fixes for small screens */
+@media (max-width: 480px) {
+  body { padding: 12px 10px 24px; }
+  .puzzle-wrap { padding: 10px; }
+  .puzzle-grid { gap: 6px; }
+  .symbol-cell { padding: 6px; min-width: 0; }
+  .symbol-cell.answer-cell { padding: 6px; }
+  .px-grid { gap: 3px; }
+  .puzzle-hint { margin-top: 4px; }
+}
+
+/* Cap the puzzle so it never exceeds the viewport height even on short screens */
+.puzzle-wrap { max-width: 100%; }
+.puzzle-grid { max-width: min(100%, calc(100dvh - 240px)); margin: 0 auto; }
 
 #app {
   width: 100%;
