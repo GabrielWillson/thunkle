@@ -4,11 +4,11 @@ Single-file browser puzzle game. Everything lives in [thunkle_9.html](thunkle_9.
 
 ## The game
 
-A 3×3 grid of pixel-art "symbols" (each symbol is a P×P bitmap, P=3 normal / P=4 in Miserable). The bottom-right cell is blank — the player toggles its pixels to fill in the missing symbol.
+A 3×3 grid of pixel-art "patterns" (each pattern is a P×P bitmap, P=3 normal / P=4 in Miserable). The bottom-right cell is blank — the player toggles its pixels to fill in the missing pattern.
 
 The grid follows a hidden rule along either rows or columns:
 
-> `symbol_A  [OP]  symbol_B  =  symbol_C`
+> `pattern_A  [OP]  pattern_B  =  pattern_C`
 
 …applied bitwise pixel-by-pixel. The same operation and direction is used for every row (or every column) in the puzzle. Each row/column is independently generated, so the player must infer the rule from the two complete rows/columns and apply it to solve the third.
 
@@ -25,7 +25,7 @@ Six bitwise ops, all defined in `applyOp` ([thunkle_9.html:712](thunkle_9.html:7
 
 Configured in `MODES` ([thunkle_9.html:580](thunkle_9.html:580)):
 
-| Mode       | Ops              | Symbol size | Direction hint |
+| Mode       | Ops              | Pattern size | Direction hint |
 |------------|------------------|-------------|----------------|
 | Quick      | AND, OR          | 3×3         | available      |
 | Challenge  | all 6            | 3×3         | none           |
@@ -41,7 +41,7 @@ Configured in `MODES` ([thunkle_9.html:580](thunkle_9.html:580)):
 
 ## Puzzle generation
 
-- `genPair` ([thunkle_9.html:730](thunkle_9.html:730)) brute-forces two input symbols whose result has between 15% and 85% on-pixels (so the answer isn't trivially all on/off). Per-op target densities live in `OP_DENSITY`.
+- `genPair` ([thunkle_9.html:730](thunkle_9.html:730)) brute-forces two input patterns whose result has between 15% and 85% on-pixels (so the answer isn't trivially all on/off). Per-op target densities live in `OP_DENSITY`.
 - `buildGrid` fills each row or column with an independent `genPair` for the chosen op.
 - Daily uses a seeded `mulberry32` RNG keyed off the date so everyone gets the same puzzle.
 

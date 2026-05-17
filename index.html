@@ -76,15 +76,18 @@ body {
   body { padding: 12px 10px 24px; }
   .puzzle-wrap { padding: 10px; }
   .puzzle-grid { gap: 6px; }
-  .symbol-cell { padding: 6px; min-width: 0; }
-  .symbol-cell.answer-cell { padding: 6px; }
+  .pattern-cell { padding: 6px; min-width: 0; }
+  .pattern-cell.answer-cell { padding: 6px; }
   .px-grid { gap: 3px; }
   .puzzle-hint { margin-top: 4px; }
 }
 
-/* Cap the puzzle so it never exceeds the viewport height even on short screens */
+/* Cap the puzzle by the smaller viewport dimension so it stays square and fits on phones */
 .puzzle-wrap { max-width: 100%; }
-.puzzle-grid { max-width: min(100%, calc(100dvh - 240px)); margin: 0 auto; }
+.puzzle-grid {
+  max-width: min(100%, 92vmin, calc(100dvh - 240px));
+  margin: 0 auto;
+}
 
 #app {
   width: 100%;
@@ -231,7 +234,7 @@ body {
   width: 100%;
 }
 
-.symbol-cell {
+.pattern-cell {
   border: 1px solid var(--border-lt);
   padding: 10px;
   display: flex;
@@ -241,7 +244,7 @@ body {
   aspect-ratio: 1;
 }
 
-.symbol-cell.answer-cell {
+.pattern-cell.answer-cell {
   background: var(--bg);
   border: 2px solid var(--border);
   padding: 10px;
@@ -266,11 +269,11 @@ body {
 .answer-cell .px:hover.off { background: var(--ink-dim); }
 .answer-cell .px:hover.on  { background: var(--ink-mid); }
 
-.symbol-cell.answer-cell.solved {
+.pattern-cell.answer-cell.solved {
   border-color: var(--good);
   background: color-mix(in srgb, var(--good) 15%, var(--bg-light));
 }
-.symbol-cell.answer-cell.solved .px.on { background: var(--good); }
+.pattern-cell.answer-cell.solved .px.on { background: var(--good); }
 
 .puzzle-hint {
   font-size: 0.72rem;
@@ -392,7 +395,7 @@ body {
   flex: 1;
 }
 
-.px, .answer-cell, .puzzle-wrap, .symbol-cell {
+.px, .answer-cell, .puzzle-wrap, .pattern-cell {
   user-select: none;
   -webkit-user-select: none;
   outline: none;
@@ -503,17 +506,17 @@ body {
 
     <button class="mode-btn" onclick="startGame('quick')">
       <div><div class="mode-name">Quick</div>
-      <div class="mode-desc">Less operations. Normal symbols.</div></div>
+      <div class="mode-desc">Less operations. Normal patterns.</div></div>
       <div class="mode-tag">Easy</div>
     </button>
     <button class="mode-btn" onclick="startGame('challenge')">
       <div><div class="mode-name">Challenge</div>
-      <div class="mode-desc">All operations. Normal symbols.</div></div>
+      <div class="mode-desc">All operations. Normal patterns.</div></div>
       <div class="mode-tag">Medium</div>
     </button>
     <button class="mode-btn" onclick="startGame('miserable')">
       <div><div class="mode-name">Miserable</div>
-      <div class="mode-desc">All operations. Large symbols.</div></div>
+      <div class="mode-desc">All operations. Large patterns.</div></div>
       <div class="mode-tag">Hard</div>
     </button>
 
@@ -715,7 +718,7 @@ function updateMenuTQ() {
 // ── PIXEL MATH ────────────────────────────────────────────────────────────────
 // density: fraction of pixels to set ON (e.g. 0.4 = 40%)
 // range: ± random variation around density (e.g. 0.08 means 32%-48%)
-function genSymbol(P, rng=Math.random, density=0.4, range=0.1) {
+function genPattern(P, rng=Math.random, density=0.4, range=0.1) {
   const total = P*P;
   const minOn = Math.max(1, Math.round(total * (density - range)));
   const maxOn = Math.min(total - 1, Math.round(total * (density + range)));
@@ -749,13 +752,13 @@ function genPair(op,P,rng=Math.random) {
   const total=P*P, minOn=Math.max(1,Math.round(total*0.15)), maxOn=Math.round(total*0.85);
   const density = OP_DENSITY[op] || 0.5;
   for (let t=0;t<300;t++) {
-    const a=genSymbol(P,rng,density), b=genSymbol(P,rng,density);
+    const a=genPattern(P,rng,density), b=genPattern(P,rng,density);
     if(eql(a,b,P)) continue;
     const c=applyOp(a,b,op,P);
     const n=ones(c,P);
     if(n>=minOn&&n<=maxOn) return [a,b,c];
   }
-  const a=genSymbol(P,rng,density), b=genSymbol(P,rng,density);
+  const a=genPattern(P,rng,density), b=genPattern(P,rng,density);
   return [a,b,applyOp(a,b,op,P)];
 }
 
@@ -776,9 +779,9 @@ function genPuzzle(mode, rng=Math.random) {
   const N=cfg.N, P=cfg.P;
   const grid=buildGrid(op,dir,N,P,rng);
   const answer=grid[N-1][N-1];
-  const symbols=[];
-  for(let r=0;r<N;r++) for(let c=0;c<N;c++) symbols.push(grid[r][c]);
-  return {op,dir,N,P,symbols,answer};
+  const patterns=[];
+  for(let r=0;r<N;r++) for(let c=0;c<N;c++) patterns.push(grid[r][c]);
+  return {op,dir,N,P,patterns,answer};
 }
 
 // ── DOM ───────────────────────────────────────────────────────────────────────
@@ -802,7 +805,7 @@ function makePxGrid(pixels, P, cls='px-grid', clickable=false) {
 function buildPuzzleGrid() {
   const el = document.getElementById('puzzleGrid');
   el.innerHTML = '';
-  const {N,P,symbols,answer} = S;
+  const {N,P,patterns,answer} = S;
 
   for (let r=0;r<N;r++) {
     for (let c=0;c<N;c++) {
@@ -811,14 +814,14 @@ function buildPuzzleGrid() {
       const cell = document.createElement('div');
 
       if (isMissing) {
-        cell.className = 'symbol-cell answer-cell';
+        cell.className = 'pattern-cell answer-cell';
         cell.id = 'answerCell';
         // blank answer starts all off
         S.playerAnswer = new Uint8Array(P*P);
         cell.appendChild(makePxGrid(S.playerAnswer, P, 'px-grid', true));
       } else {
-        cell.className = 'symbol-cell';
-        cell.appendChild(makePxGrid(symbols[idx], P));
+        cell.className = 'pattern-cell';
+        cell.appendChild(makePxGrid(patterns[idx], P));
       }
       el.appendChild(cell);
     }
@@ -936,11 +939,11 @@ function buildSolutionReveal() {
   wrap.appendChild(rule);
   const grid = document.createElement('div');
   grid.className = 'solution-grid';
-  const {N, P, symbols, answer} = S;
+  const {N, P, patterns, answer} = S;
   for (let i=0; i<N*N; i++) {
     const cell = document.createElement('div');
     cell.className = 'solution-cell' + (i === N*N-1 ? ' is-answer' : '');
-    cell.appendChild(makePxGrid(i === N*N-1 ? answer : symbols[i], P));
+    cell.appendChild(makePxGrid(i === N*N-1 ? answer : patterns[i], P));
     grid.appendChild(cell);
   }
   wrap.appendChild(grid);
