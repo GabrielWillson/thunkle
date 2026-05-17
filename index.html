@@ -1,0 +1,1038 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Thunkle</title>
+<link href="https://fonts.googleapis.com/css2?family=Crimson+Pro:ital,wght@0,300;0,400;0,600;1,400&display=swap" rel="stylesheet">
+<style>
+* { box-sizing: border-box; margin: 0; padding: 0; }
+
+:root {
+  --bg:       #ede8df;
+  --bg-dark:  #a09890;
+  --bg-light: #f5f2ec;
+  --bg-mid:   #e2ddd4;
+  --panel:    #ede9e2;
+  --border:   #b8b2a8;
+  --border-lt:#d4cfc8;
+  --ink:      #1c1a18;
+  --ink-mid:  #484440;
+  --ink-dim:  #888078;
+  --px-off:   #c4beb6;
+  --px-on:    #1c1a18;
+  --good:     #3a6a3a;
+}
+
+@media (prefers-color-scheme: dark) {
+  :root {
+    --bg:       #28241e;
+    --bg-dark:  #16140f;
+    --bg-light: #343028;
+    --bg-mid:   #2e2a24;
+    --panel:    #302c26;
+    --border:   #504840;
+    --border-lt:#3c3830;
+    --ink:      #e8e2d8;
+    --ink-mid:  #b0a898;
+    --ink-dim:  #706860;
+    --px-off:   #484038;
+    --px-on:    #e8e2d8;
+    --good:     #5a9a5a;
+  }
+  .site-title, .mode-name, .mode-tag,
+  .tq-value, .stat-val, .result-heading,
+  .rs-val, .rs-lbl, .result-score,
+  .help-title, .help-intro, .op-title, .op-desc,
+  .game-label, .hint-bar, .puzzle-hint,
+  .back-btn, .help-btn, .help-close,
+  .res-btn, .tq-label, .tq-sub { color: var(--ink); }
+  .mode-desc { color: var(--ink-dim); }
+  .daily-btn { background: var(--bg-light); color: #1c1a18; }
+  .daily-btn .mode-name { color: #1c1a18; }
+  .result-score strong { color: var(--ink); }
+  .op-section.quick-only { background: var(--bg-mid); }
+  .ex-lbl, .ex-op-txt { color: var(--ink-dim); }
+  .daily-btn:hover:not(:disabled) { background: #c8c4bc; }
+}
+
+body {
+  background: var(--bg);
+  min-height: 100vh;
+  display: flex;
+  align-items: flex-start;
+  justify-content: center;
+  font-family: 'Crimson Pro', 'Georgia', serif;
+  padding: 20px 12px 40px;
+  color: var(--ink);
+  font-size: 17px;
+}
+
+#app {
+  width: 100%;
+  max-width: 540px;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.site-title {
+  font-size: 2.4rem;
+  font-weight: 300;
+  letter-spacing: 0.12em;
+  color: var(--ink);
+  display: flex;
+  align-items: flex-end;
+  gap: 0;
+}
+
+/* ── SCORES BAR ── */
+.tq-bar {
+  background: var(--bg-dark);
+  border: 1px solid var(--border);
+  padding: 10px 16px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  color: var(--bg-light);
+  gap: 12px;
+}
+.tq-label { font-size: 0.72rem; text-transform: uppercase; letter-spacing: 0.15em; opacity: 0.85; font-weight: 300; white-space: nowrap; }
+.tq-value { font-size: 1.5rem; font-weight: 600; }
+.tq-scores { display: flex; gap: 8px; align-items: center; flex-wrap: wrap; justify-content: flex-end; }
+.tq-score-item { display: flex; flex-direction: column; align-items: center; gap: 1px; }
+.tq-score-val { font-size: 0.95rem; font-weight: 600; }
+.tq-score-val.empty { opacity: 0.3; }
+.tq-score-date { font-size: 0.55rem; opacity: 0.5; letter-spacing: 0.04em; }
+
+/* ── MENU ── */
+#menu { display: flex; flex-direction: column; gap: 8px; }
+
+.daily-btn {
+  background: var(--ink);
+  border: none;
+  padding: 16px 18px;
+  cursor: pointer;
+  text-align: left;
+  font-family: inherit;
+  transition: background 0.1s;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  color: var(--bg-light);
+}
+.daily-btn:hover:not(:disabled) { background: #343028; }
+.daily-btn:disabled { cursor: default; opacity: 0.65; }
+.daily-btn .mode-desc { color: var(--ink-dim); margin-top: 3px; }
+
+.mode-btn {
+  background: var(--panel);
+  border: 1px solid var(--border);
+  padding: 13px 18px;
+  cursor: pointer;
+  text-align: left;
+  font-family: inherit;
+  transition: background 0.1s;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+.mode-btn:hover { background: var(--bg-mid); }
+.mode-name { font-size: 1rem; font-weight: 600; text-transform: uppercase; letter-spacing: 0.08em; }
+.mode-desc { font-size: 0.78rem; color: var(--ink-dim); margin-top: 3px; }
+.mode-tag  { font-size: 0.72rem; color: var(--ink-dim); }
+
+/* ── GAME ── */
+#game { display: none; flex-direction: column; gap: 10px; }
+
+.top-bar {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+.top-left { display: flex; gap: 8px; align-items: center; }
+
+.back-btn, .help-btn {
+  background: none;
+  border: 1px solid var(--border);
+  font-family: inherit;
+  font-size: 0.85rem;
+  color: var(--ink-mid);
+  cursor: pointer;
+  padding: 4px 12px;
+  transition: background 0.1s;
+}
+.back-btn:hover, .help-btn:hover { background: var(--bg-mid); }
+.help-btn { font-weight: 600; }
+
+.game-label {
+  font-size: 0.72rem;
+  color: var(--ink-dim);
+  text-transform: uppercase;
+  letter-spacing: 0.18em;
+  font-weight: 300;
+}
+
+.hint-bar {
+  font-size: 0.82rem;
+  color: var(--ink-mid);
+  background: var(--panel);
+  border: 1px solid var(--border-lt);
+  padding: 6px 14px;
+  display: none;
+}
+.hint-bar.on { display: block; }
+
+.hint-reveal-btn {
+  background: none;
+  border: 1px solid var(--border);
+  font-family: inherit;
+  font-size: 0.78rem;
+  color: var(--ink-dim);
+  cursor: pointer;
+  padding: 5px 14px;
+  font-style: italic;
+  transition: background 0.1s, color 0.1s;
+  width: 100%;
+  text-align: left;
+}
+.hint-reveal-btn:hover { background: var(--bg-mid); color: var(--ink-mid); }
+.hint-reveal-btn.used { display: none; }
+
+/* ── PUZZLE ── */
+.puzzle-wrap {
+  background: var(--panel);
+  border: 1px solid var(--border);
+  padding: 14px;
+}
+
+.puzzle-grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 8px;
+  width: 100%;
+}
+
+.symbol-cell {
+  border: 1px solid var(--border-lt);
+  padding: 10px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: var(--bg-light);
+  aspect-ratio: 1;
+}
+
+.symbol-cell.answer-cell {
+  background: var(--bg);
+  border: 2px solid var(--border);
+  padding: 10px;
+  cursor: default;
+}
+
+.px-grid {
+  display: grid;
+  gap: 4px;
+  width: 100%;
+  height: 100%;
+}
+.px {
+  aspect-ratio: 1;
+  border-radius: 1px;
+  transition: background 0.07s;
+}
+.px.on  { background: var(--px-on); }
+.px.off { background: var(--px-off); }
+
+.answer-cell .px { cursor: pointer; }
+.answer-cell .px:hover.off { background: var(--ink-dim); }
+.answer-cell .px:hover.on  { background: var(--ink-mid); }
+
+.symbol-cell.answer-cell.solved {
+  border-color: var(--good);
+  background: color-mix(in srgb, var(--good) 15%, var(--bg-light));
+}
+.symbol-cell.answer-cell.solved .px.on { background: var(--good); }
+
+.puzzle-hint {
+  font-size: 0.72rem;
+  color: var(--ink-dim);
+  text-align: center;
+  font-style: italic;
+  margin-top: 2px;
+}
+
+/* ── RESULT ── */
+#result { display: none; flex-direction: column; }
+
+.result-box {
+  background: var(--panel);
+  border: 1px solid var(--border);
+  padding: 28px 24px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 16px;
+  text-align: center;
+}
+.result-heading { font-size: 0.75rem; text-transform: uppercase; letter-spacing: 0.22em; color: var(--ink-dim); font-weight: 300; }
+.result-stats { display: flex; gap: 30px; }
+.rs { display: flex; flex-direction: column; align-items: center; gap: 3px; }
+.rs-val { font-size: 1.8rem; font-weight: 600; color: var(--good); }
+.rs-lbl { font-size: 0.65rem; color: var(--ink-dim); text-transform: uppercase; letter-spacing: 0.12em; }
+.result-score { font-size: 0.85rem; color: var(--ink-mid); letter-spacing: 0.05em; line-height: 2; }
+.result-score strong { color: var(--ink); font-size: 1.1rem; font-weight: 600; }
+.result-btns { display: flex; gap: 10px; }
+.res-btn {
+  background: var(--bg-mid); border: 1px solid var(--border);
+  padding: 8px 24px; font-family: inherit; font-size: 0.85rem;
+  text-transform: uppercase; letter-spacing: 0.1em;
+  cursor: pointer; transition: background 0.1s; color: var(--ink);
+}
+.res-btn:hover { background: var(--bg-dark); color: var(--bg-light); }
+
+/* ── HELP MODAL ── */
+#helpModal {
+  display: none; position: fixed; inset: 0;
+  background: rgba(0,0,0,0.45); z-index: 100;
+  align-items: center; justify-content: center; padding: 16px;
+}
+#helpModal.open { display: flex; }
+
+.help-box {
+  background: var(--panel); border: 1px solid var(--border);
+  width: 100%; max-width: 520px; max-height: 88vh;
+  overflow-y: auto; padding: 20px;
+  display: flex; flex-direction: column; gap: 14px;
+}
+.help-header { display: flex; justify-content: space-between; align-items: center; }
+.help-title { font-size: 0.88rem; font-weight: 600; text-transform: uppercase; letter-spacing: 0.15em; }
+.help-close {
+  background: none; border: 1px solid var(--border);
+  font-family: inherit; font-size: 0.82rem; color: var(--ink-mid);
+  cursor: pointer; padding: 4px 10px;
+}
+.help-close:hover { background: var(--bg-mid); }
+.help-intro { font-size: 0.88rem; color: var(--ink-mid); line-height: 1.7; }
+.help-divider { border: none; border-top: 1px solid var(--border-lt); }
+.op-section { display: flex; flex-direction: column; gap: 7px; }
+.op-section.quick-only { border: 1px solid var(--border); padding: 10px; background: var(--bg-mid); }
+.op-title { font-size: 0.78rem; font-weight: 600; text-transform: uppercase; letter-spacing: 0.1em; }
+.op-desc  { font-size: 0.78rem; color: var(--ink-dim); line-height: 1.5; }
+.quick-badge {
+  display: inline-block; font-size: 0.6rem; letter-spacing: 0.08em;
+  text-transform: uppercase; border: 1px solid var(--border);
+  padding: 1px 5px; color: var(--ink-dim); margin-left: 7px; vertical-align: middle;
+}
+.op-example {
+  display: flex; align-items: center; gap: 8px;
+  background: var(--bg); border: 1px solid var(--border-lt);
+  padding: 8px 10px; flex-wrap: wrap;
+}
+.ex-sym { display: flex; flex-direction: column; align-items: center; gap: 3px; }
+.ex-lbl { font-size: 0.6rem; color: var(--ink-dim); font-style: italic; }
+.ex-op-txt { font-size: 0.9rem; color: var(--ink-dim); font-weight: 600; }
+.site-header {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  position: relative;
+}
+.site-header .help-btn {
+  position: absolute;
+  right: 0;
+}
+
+.t-logo {
+  width: 0.75em;
+  height: auto;
+  fill: var(--ink);
+  flex-shrink: 0;
+  position: relative;
+  top: -0.07em;
+  margin-right: 0.15em;
+  margin-left: 0;
+}
+
+.menu-help-btn {
+  align-self: flex-end;
+  font-size: 0.82rem;
+  padding: 5px 12px;
+}
+
+.menu-footer {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.byline {
+  font-size: 0.72rem;
+  color: var(--ink-dim);
+  font-style: italic;
+  text-align: center;
+  flex: 1;
+}
+
+.px, .answer-cell, .puzzle-wrap, .symbol-cell {
+  user-select: none;
+  -webkit-user-select: none;
+  outline: none;
+}
+
+.give-up-btn {
+  background: none;
+  border: 1px solid var(--border);
+  font-family: inherit;
+  font-size: 0.85rem;
+  color: var(--ink-mid);
+  cursor: pointer;
+  padding: 4px 12px;
+  transition: background 0.1s;
+}
+.give-up-btn:hover { background: var(--bg-mid); }
+
+.solution-wrap {
+  width: 100%;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  align-items: center;
+}
+.solution-label {
+  font-size: 0.65rem;
+  text-transform: uppercase;
+  letter-spacing: 0.15em;
+  color: var(--ink-dim);
+  align-self: flex-start;
+}
+.solution-rule {
+  font-size: 0.82rem;
+  color: var(--ink-mid);
+  font-style: italic;
+  align-self: flex-start;
+  line-height: 1.5;
+}
+.solution-grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 5px;
+  width: 100%;
+  max-width: 220px;
+}
+.solution-cell {
+  border: 1px solid var(--border-lt);
+  padding: 6px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: var(--bg-light);
+  aspect-ratio: 1;
+}
+.solution-cell.is-answer {
+  border: 2px solid var(--good);
+  background: color-mix(in srgb, var(--good) 12%, var(--bg-light));
+}
+.solution-cell.is-answer .px.on { background: var(--good); }
+
+/* TQ scores bar */
+.tq-scores { display: flex; gap: 8px; align-items: center; flex-wrap: wrap; justify-content: flex-end; }
+.tq-score-item { display: flex; flex-direction: column; align-items: center; gap: 1px; }
+.tq-score-val { font-size: 0.95rem; font-weight: 600; }
+.tq-score-val.empty { opacity: 0.3; }
+.tq-score-date { font-size: 0.55rem; opacity: 0.5; letter-spacing: 0.04em; }
+
+.ex-px-grid { display: grid; gap: 2px; width: 44px; }
+.ex-px { aspect-ratio: 1; border-radius: 1px; }
+.ex-px.on  { background: var(--px-on); }
+.ex-px.off { background: var(--px-off); }
+
+</style>
+</head>
+<body>
+<div id="app">
+  <div class="site-header">
+    <div class="site-title">
+      <svg class="t-logo" viewBox="0 0 11 13" xmlns="http://www.w3.org/2000/svg">
+        <!-- top row: 3×3 squares, 1px gap -->
+        <rect x="0" y="0" width="3" height="3"/>
+        <rect x="4" y="0" width="3" height="3"/>
+        <rect x="8" y="0" width="3" height="3"/>
+        <!-- stem -->
+        <rect x="4" y="4" width="3" height="3"/>
+        <rect x="4" y="8" width="3" height="3"/>
+      </svg>
+      hunkle
+    </div>
+  </div>
+
+  <!-- MENU -->
+  <div id="menu">
+    <div class="tq-bar">
+      <div>
+        <div class="tq-label">TQ</div>
+        <div class="tq-value" id="tqValue">—</div>
+      </div>
+      <div class="tq-scores" id="tqScores"></div>
+    </div>
+
+    <button class="daily-btn" id="dailyBtn" onclick="startDaily()">
+      <div>
+        <div class="mode-name" id="dailyBtnName">Daily Challenge</div>
+        <div class="mode-desc" id="dailyBtnDesc">Today's puzzle. Same for everyone.</div>
+      </div>
+    </button>
+
+    <button class="mode-btn" onclick="startGame('quick')">
+      <div><div class="mode-name">Quick</div>
+      <div class="mode-desc">Less operations. Normal symbols.</div></div>
+      <div class="mode-tag">Easy</div>
+    </button>
+    <button class="mode-btn" onclick="startGame('challenge')">
+      <div><div class="mode-name">Challenge</div>
+      <div class="mode-desc">All operations. Normal symbols.</div></div>
+      <div class="mode-tag">Medium</div>
+    </button>
+    <button class="mode-btn" onclick="startGame('miserable')">
+      <div><div class="mode-name">Miserable</div>
+      <div class="mode-desc">All operations. Large symbols.</div></div>
+      <div class="mode-tag">Hard</div>
+    </button>
+
+    <div class="menu-footer">
+      <div class="byline">by GabeMakeGames</div>
+      <button class="help-btn menu-help-btn" onclick="openHelp()">?</button>
+    </div>
+  </div>
+
+  <!-- GAME -->
+  <div id="game">
+    <div class="top-bar">
+      <div class="top-left">
+        <button class="back-btn" onclick="showMenu()">menu</button>
+        <button class="help-btn" onclick="openHelp()">?</button>
+      </div>
+      <div class="game-label" id="gameLabel"></div>
+    </div>
+
+    <div id="hintArea" style="display:none;">
+      <button class="hint-reveal-btn" id="hintRevealBtn" onclick="revealHint()">Show direction hint</button>
+      <div class="hint-bar" id="hintBar"></div>
+    </div>
+
+    <div class="puzzle-wrap">
+      <div class="puzzle-grid" id="puzzleGrid"></div>
+    </div>
+
+    <div class="puzzle-hint">Toggle pixels in the empty cell to match the pattern</div>
+    <button class="give-up-btn" id="giveUpBtn" onclick="giveUp()">Give up</button>
+  </div>
+
+  <!-- RESULT -->
+  <div id="result">
+    <div class="result-box">
+      <div class="result-heading" id="resultHeading"></div>
+      <div class="result-stats">
+        <div class="rs">
+          <div class="rs-val good" id="rTime">—</div>
+          <div class="rs-lbl">seconds</div>
+        </div>
+      </div>
+      <div class="result-score" id="resultScore"></div>
+      <div id="solutionReveal" style="display:none;width:100%;"></div>
+      <div class="result-btns">
+        <button class="res-btn" id="againBtn">Play Again</button>
+        <button class="res-btn" onclick="showMenu()">Menu</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- HELP MODAL -->
+<div id="helpModal">
+  <div class="help-box">
+    <div class="help-header">
+      <div class="help-title">How Thunkle Works</div>
+      <button class="help-close" onclick="closeHelp()">close</button>
+    </div>
+    <div class="help-intro">
+      Each puzzle has a different rule and direction. The first pattern will be changed by the second pattern to make the third. This is in either rows or columns. There are 6 ways the patterns can interact with each other (operations). It helps to know that the results of the operations are either the right column or the bottom row, good luck!
+    </div>
+
+    <hr class="help-divider">
+    <div id="opExamples"></div>
+
+    <hr class="help-divider">
+
+    <div class="op-section">
+      <div class="op-title">Thunkle Quotient (TQ)</div>
+      <div class="op-desc">
+        The TQ is the Thunkle Quotient. This represents the score of the last five daily challenges you have completed. Each daily score is calculated as:<br><br>
+        <strong style="font-size:0.85rem;">score = (expected time / your time) x 100</strong><br><br>
+        A score of 100 means you solved it at the expected pace. Faster scores above 100, slower scores below. Practice modes show a score on completion but do not count toward your TQ.
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+// ── CONFIG ────────────────────────────────────────────────────────────────────
+const MODES = {
+  quick:      { ops: ['AND','OR'],                           N: 3, P: 3, hint: true  },
+  challenge:  { ops: ['AND','OR','XOR','NAND','NOR','XNOR'], N: 3, P: 3, hint: false },
+  miserable:  { ops: ['AND','OR','XOR','NAND','NOR','XNOR'], N: 3, P: 4, hint: false },
+};
+const DAILY_EXPECT = 120;
+
+const OP_DENSITY = { AND:0.55, OR:0.45, XOR:0.50, NAND:0.55, NOR:0.45, XNOR:0.50 };
+
+const OP_INFO = [
+  { op:'AND',  desc:'Output pixel is ON only if BOTH inputs are ON. Produces sparse results.', quick:true },
+  { op:'OR',   desc:'Output pixel is ON if EITHER input is ON. Produces dense results.', quick:true },
+  { op:'XOR',  desc:'Output pixel is ON if inputs DIFFER. ON+OFF=ON, ON+ON=OFF, OFF+OFF=OFF.' },
+  { op:'NAND', desc:'Opposite of AND. Output is OFF only when BOTH inputs are ON.' },
+  { op:'NOR',  desc:'Opposite of OR. Output is ON only when BOTH inputs are OFF.' },
+  { op:'XNOR', desc:'Opposite of XOR. Output pixel is ON if inputs are the SAME.' },
+];
+
+let S = {};
+let timerInterval = null;
+let pausedElapsed = 0;
+let timerRunning = false;
+
+// ── SEEDED RNG ────────────────────────────────────────────────────────────────
+function mulberry32(seed) {
+  return function() {
+    seed |= 0; seed = seed + 0x6D2B79F5 | 0;
+    let t = Math.imul(seed ^ seed >>> 15, 1 | seed);
+    t = t + Math.imul(t ^ t >>> 7, 61 | t) ^ t;
+    return ((t ^ t >>> 14) >>> 0) / 4294967296;
+  };
+}
+
+function todayKey() {
+  const d = new Date();
+  return `${d.getFullYear()}-${d.getMonth()+1}-${d.getDate()}`;
+}
+
+function todaySeed() {
+  const key = todayKey();
+  let h = 0;
+  for (let i=0;i<key.length;i++) { h = ((h<<5)-h)+key.charCodeAt(i); h|=0; }
+  return Math.abs(h);
+}
+
+// ── STORAGE ───────────────────────────────────────────────────────────────────
+function loadTQHistory() {
+  try { return JSON.parse(localStorage.getItem('thunkle_tq') || '[]'); }
+  catch { return []; }
+}
+
+function saveTQScore(dateKey, score) {
+  let hist = loadTQHistory().filter(e => e.date !== dateKey);
+  hist.push({ date: dateKey, score });
+  hist.sort((a,b) => a.date < b.date ? -1 : 1);
+  if (hist.length > 5) hist = hist.slice(-5);
+  localStorage.setItem('thunkle_tq', JSON.stringify(hist));
+}
+
+function calcTQ() {
+  const hist = loadTQHistory();
+  if (!hist.length) return null;
+  return Math.round(hist.reduce((s,e) => s+e.score, 0) / hist.length);
+}
+
+function loadDailyRecord() {
+  try { return JSON.parse(localStorage.getItem('thunkle_daily') || '{}'); }
+  catch { return {}; }
+}
+
+function saveDailyRecord(dateKey, data) {
+  const rec = loadDailyRecord();
+  rec[dateKey] = data;
+  const keys = Object.keys(rec).sort();
+  if (keys.length > 7) keys.slice(0, keys.length-7).forEach(k => delete rec[k]);
+  localStorage.setItem('thunkle_daily', JSON.stringify(rec));
+}
+
+function updateMenuTQ() {
+  const hist = loadTQHistory();
+  const tq = calcTQ();
+  document.getElementById('tqValue').textContent = tq !== null ? tq : '—';
+
+  const scoresEl = document.getElementById('tqScores');
+  scoresEl.innerHTML = '';
+  const slots = Array.from({length: 5}, (_, i) => hist[hist.length - 5 + i] || null);
+  slots.forEach(entry => {
+    const item = document.createElement('div');
+    item.className = 'tq-score-item';
+    const val = document.createElement('div');
+    val.className = 'tq-score-val' + (entry ? '' : ' empty');
+    val.textContent = entry ? Math.round(entry.score) : '—';
+    item.appendChild(val);
+    if (entry) {
+      const d = document.createElement('div');
+      d.className = 'tq-score-date';
+      const parts = entry.date.split('-');
+      d.textContent = `${parts[1]}/${parts[2]}`;
+      item.appendChild(d);
+    }
+    scoresEl.appendChild(item);
+  });
+
+  const rec = loadDailyRecord();
+  const today = rec[todayKey()];
+  const btn = document.getElementById('dailyBtn');
+  if (today) {
+    btn.disabled = true;
+    document.getElementById('dailyBtnName').textContent = 'Daily Challenge (Done)';
+    document.getElementById('dailyBtnDesc').textContent = `${today.time}s. Score ${Math.round(today.score)}.`;
+  } else {
+    btn.disabled = false;
+    document.getElementById('dailyBtnName').textContent = 'Daily Challenge';
+    document.getElementById('dailyBtnDesc').textContent = "Today's puzzle. Same for everyone.";
+  }
+}
+
+// ── PIXEL MATH ────────────────────────────────────────────────────────────────
+// density: fraction of pixels to set ON (e.g. 0.4 = 40%)
+// range: ± random variation around density (e.g. 0.08 means 32%-48%)
+function genSymbol(P, rng=Math.random, density=0.4, range=0.1) {
+  const total = P*P;
+  const minOn = Math.max(1, Math.round(total * (density - range)));
+  const maxOn = Math.min(total - 1, Math.round(total * (density + range)));
+  const on = minOn + Math.floor(rng() * (maxOn - minOn + 1));
+  const a = new Uint8Array(total);
+  const idx = [...Array(total).keys()];
+  for (let i=total-1;i>0;i--) { const j=0|rng()*(i+1); [idx[i],idx[j]]=[idx[j],idx[i]]; }
+  for (let k=0;k<on;k++) a[idx[k]]=1;
+  return a;
+}
+
+function applyOp(a,b,op,P) {
+  const c = new Uint8Array(P*P);
+  for (let i=0;i<P*P;i++) {
+    switch(op){
+      case 'AND':  c[i]=a[i]&b[i]; break;
+      case 'OR':   c[i]=a[i]|b[i]; break;
+      case 'XOR':  c[i]=a[i]^b[i]; break;
+      case 'NAND': c[i]=1-(a[i]&b[i]); break;
+      case 'NOR':  c[i]=1-(a[i]|b[i]); break;
+      case 'XNOR': c[i]=1-(a[i]^b[i]); break;
+    }
+  }
+  return c;
+}
+
+function ones(a,P){ let n=0; for(let i=0;i<P*P;i++) n+=a[i]; return n; }
+function eql(a,b,P){ for(let i=0;i<P*P;i++) if(a[i]!==b[i]) return false; return true; }
+
+function genPair(op,P,rng=Math.random) {
+  const total=P*P, minOn=Math.max(1,Math.round(total*0.15)), maxOn=Math.round(total*0.85);
+  const density = OP_DENSITY[op] || 0.5;
+  for (let t=0;t<300;t++) {
+    const a=genSymbol(P,rng,density), b=genSymbol(P,rng,density);
+    if(eql(a,b,P)) continue;
+    const c=applyOp(a,b,op,P);
+    const n=ones(c,P);
+    if(n>=minOn&&n<=maxOn) return [a,b,c];
+  }
+  const a=genSymbol(P,rng,density), b=genSymbol(P,rng,density);
+  return [a,b,applyOp(a,b,op,P)];
+}
+
+function buildGrid(op,dir,N,P,rng=Math.random) {
+  const g = Array.from({length:N},()=>Array(N).fill(null));
+  if (dir==='row') {
+    for(let r=0;r<N;r++){ const [a,b,c]=genPair(op,P,rng); g[r][0]=a;g[r][1]=b;g[r][2]=c; }
+  } else {
+    for(let c=0;c<N;c++){ const [a,b,res]=genPair(op,P,rng); g[0][c]=a;g[1][c]=b;g[2][c]=res; }
+  }
+  return g;
+}
+
+function genPuzzle(mode, rng=Math.random) {
+  const cfg=MODES[mode];
+  const op=cfg.ops[0|rng()*cfg.ops.length];
+  const dir=rng()<0.5?'row':'col';
+  const N=cfg.N, P=cfg.P;
+  const grid=buildGrid(op,dir,N,P,rng);
+  const answer=grid[N-1][N-1];
+  const symbols=[];
+  for(let r=0;r<N;r++) for(let c=0;c<N;c++) symbols.push(grid[r][c]);
+  return {op,dir,N,P,symbols,answer};
+}
+
+// ── DOM ───────────────────────────────────────────────────────────────────────
+function makePxGrid(pixels, P, cls='px-grid', clickable=false) {
+  const pg = document.createElement('div');
+  pg.className = cls;
+  pg.style.gridTemplateColumns = `repeat(${P},1fr)`;
+  for (let i=0;i<P*P;i++) {
+    const p = document.createElement('div');
+    const pCls = cls==='ex-px-grid' ? 'ex-px' : 'px';
+    p.className = pCls + ' ' + (pixels[i] ? 'on' : 'off');
+    if (clickable) {
+      p.dataset.idx = i;
+      p.addEventListener('click', onPixelClick);
+    }
+    pg.appendChild(p);
+  }
+  return pg;
+}
+
+function buildPuzzleGrid() {
+  const el = document.getElementById('puzzleGrid');
+  el.innerHTML = '';
+  const {N,P,symbols,answer} = S;
+
+  for (let r=0;r<N;r++) {
+    for (let c=0;c<N;c++) {
+      const idx = r*N+c;
+      const isMissing = idx === N*N-1;
+      const cell = document.createElement('div');
+
+      if (isMissing) {
+        cell.className = 'symbol-cell answer-cell';
+        cell.id = 'answerCell';
+        // blank answer starts all off
+        S.playerAnswer = new Uint8Array(P*P);
+        cell.appendChild(makePxGrid(S.playerAnswer, P, 'px-grid', true));
+      } else {
+        cell.className = 'symbol-cell';
+        cell.appendChild(makePxGrid(symbols[idx], P));
+      }
+      el.appendChild(cell);
+    }
+  }
+}
+
+function onPixelClick(e) {
+  if (S.solved) return;
+  const i = parseInt(e.target.dataset.idx);
+  S.playerAnswer[i] ^= 1;
+  e.target.className = 'px ' + (S.playerAnswer[i] ? 'on' : 'off');
+  checkAnswer();
+}
+
+function checkAnswer() {
+  if (eql(S.playerAnswer, S.answer, S.P)) {
+    S.solved = true;
+    const t = stopTimer();
+    const cell = document.getElementById('answerCell');
+    cell.classList.add('solved');
+    // disable further clicks
+    cell.querySelectorAll('.px').forEach(p => p.style.pointerEvents='none');
+    setTimeout(() => showResult(parseFloat(t)), 700);
+  }
+}
+
+// ── TIMER ─────────────────────────────────────────────────────────────────────
+function startTimer() {
+  timerRunning = true;
+  S.t0 = performance.now() - pausedElapsed * 1000;
+}
+
+function pauseTimer() {
+  if (!timerRunning) return;
+  timerRunning = false;
+  pausedElapsed = (performance.now() - S.t0) / 1000;
+}
+
+function resumeTimer() {
+  if (timerRunning) return;
+  timerRunning = true;
+  S.t0 = performance.now() - pausedElapsed * 1000;
+}
+
+function stopTimer() {
+  timerRunning = false;
+  return ((performance.now() - S.t0) / 1000).toFixed(1);
+}
+
+// ── HELP ─────────────────────────────────────────────────────────────────────
+function buildHelpExamples() {
+  const container = document.getElementById('opExamples');
+  container.innerHTML = '';
+  container.style.cssText = 'display:flex;flex-direction:column;gap:14px;';
+  const A = new Uint8Array([1,0,1, 0,1,0, 1,1,0]);
+  const B = new Uint8Array([1,1,0, 1,0,0, 0,1,1]);
+  const exP = 3;
+
+  OP_INFO.forEach(({op,desc,quick}) => {
+    const C = applyOp(A,B,op,exP);
+    const sec = document.createElement('div');
+    sec.className = 'op-section' + (quick ? ' quick-only' : '');
+
+    const title = document.createElement('div');
+    title.className = 'op-title';
+    title.innerHTML = op + (quick ? '<span class="quick-badge">Quick</span>' : '');
+
+    const d = document.createElement('div');
+    d.className = 'op-desc'; d.textContent = desc;
+
+    const ex = document.createElement('div');
+    ex.className = 'op-example';
+
+    function sym(pixels, label) {
+      const w = document.createElement('div'); w.className = 'ex-sym';
+      w.appendChild(makePxGrid(pixels, exP, 'ex-px-grid'));
+      const l = document.createElement('div'); l.className = 'ex-lbl'; l.textContent = label;
+      w.appendChild(l); return w;
+    }
+    function txt(t) {
+      const d = document.createElement('div'); d.className = 'ex-op-txt'; d.textContent = t; return d;
+    }
+
+    ex.appendChild(sym(A,'Input A'));
+    ex.appendChild(txt(op));
+    ex.appendChild(sym(B,'Input B'));
+    ex.appendChild(txt('='));
+    ex.appendChild(sym(C,'Result'));
+
+    sec.appendChild(title); sec.appendChild(d); sec.appendChild(ex);
+    container.appendChild(sec);
+  });
+}
+
+function giveUp() {
+  if (S.solved) return;
+  S.solved = true;
+  S.givenUp = true;
+  const t = stopTimer();
+  const cell = document.getElementById('answerCell');
+  if (cell) cell.querySelectorAll('.px').forEach(p => p.style.pointerEvents='none');
+  setTimeout(() => showResult(parseFloat(t)), 300);
+}
+
+function buildSolutionReveal() {
+  const wrap = document.createElement('div');
+  wrap.className = 'solution-wrap';
+  const lbl = document.createElement('div');
+  lbl.className = 'solution-label'; lbl.textContent = 'Solution';
+  wrap.appendChild(lbl);
+  const dirTxt = S.dir === 'row' ? 'left → right' : 'top → bottom';
+  const rule = document.createElement('div');
+  rule.className = 'solution-rule';
+  rule.textContent = `Direction: ${dirTxt}. Operation: ${S.op}.`;
+  wrap.appendChild(rule);
+  const grid = document.createElement('div');
+  grid.className = 'solution-grid';
+  const {N, P, symbols, answer} = S;
+  for (let i=0; i<N*N; i++) {
+    const cell = document.createElement('div');
+    cell.className = 'solution-cell' + (i === N*N-1 ? ' is-answer' : '');
+    cell.appendChild(makePxGrid(i === N*N-1 ? answer : symbols[i], P));
+    grid.appendChild(cell);
+  }
+  wrap.appendChild(grid);
+  return wrap;
+}
+
+function openHelp() { buildHelpExamples(); pauseTimer(); document.getElementById('helpModal').classList.add('open'); }
+function closeHelp() { document.getElementById('helpModal').classList.remove('open'); resumeTimer(); }
+document.getElementById('helpModal').addEventListener('click', function(e){ if(e.target===this) closeHelp(); });
+
+// ── FLOW ──────────────────────────────────────────────────────────────────────
+function revealHint() {
+  const hb = document.getElementById('hintBar');
+  hb.textContent = 'Direction: ' + (S.dir === 'row' ? 'left → right' : 'top → bottom');
+  hb.className = 'hint-bar on';
+  document.getElementById('hintRevealBtn').classList.add('used');
+}
+
+function startGame(mode) {
+  pauseTimer(); pausedElapsed = 0;
+  const puzzle = genPuzzle(mode);
+  S = { ...puzzle, mode, isDaily: false, solved: false, givenUp: false, playerAnswer: null };
+
+  const hintArea = document.getElementById('hintArea');
+  const hb = document.getElementById('hintBar');
+  const revBtn = document.getElementById('hintRevealBtn');
+  hintArea.style.display = 'flex';
+  hintArea.style.flexDirection = 'column';
+  hintArea.style.gap = '0';
+  hb.className = 'hint-bar';
+  hb.textContent = '';
+  revBtn.classList.remove('used');
+
+  document.getElementById('gameLabel').textContent = mode.toUpperCase();
+  buildPuzzleGrid();
+
+  document.getElementById('menu').style.display = 'none';
+  document.getElementById('result').style.display = 'none';
+  document.getElementById('game').style.display = 'flex';
+  startTimer();
+}
+
+function startDaily() {
+  const rec = loadDailyRecord();
+  if (rec[todayKey()]) return;
+  pauseTimer(); pausedElapsed = 0;
+
+  document.getElementById('hintArea').style.display = 'none';
+
+  const rng = mulberry32(todaySeed());
+  const puzzle = genPuzzle('challenge', rng);
+  S = { ...puzzle, mode: 'challenge', isDaily: true, dateKey: todayKey(), solved: false, givenUp: false, playerAnswer: null };
+
+  document.getElementById('hintBar').className = 'hint-bar';
+  document.getElementById('gameLabel').textContent = 'DAILY';
+  buildPuzzleGrid();
+
+  document.getElementById('menu').style.display = 'none';
+  document.getElementById('result').style.display = 'none';
+  document.getElementById('game').style.display = 'flex';
+  startTimer();
+}
+
+function showResult(timeSec) {
+  document.getElementById('game').style.display = 'none';
+  document.getElementById('result').style.display = 'flex';
+
+  const givenUp = !!S.givenUp;
+  document.getElementById('rTime').textContent = givenUp ? '—' : timeSec.toFixed(1);
+  document.getElementById('rTime').className = 'rs-val' + (givenUp ? '' : ' good');
+  document.getElementById('resultHeading').textContent =
+    givenUp ? 'given up' : (S.isDaily ? 'daily challenge' : 'solved');
+
+  const scoreEl = document.getElementById('resultScore');
+  const againBtn = document.getElementById('againBtn');
+  const solutionEl = document.getElementById('solutionReveal');
+  solutionEl.innerHTML = '';
+
+  if (S.isDaily) {
+    const score = givenUp ? 0 : (DAILY_EXPECT / Math.max(timeSec, 0.1)) * 100;
+    saveDailyRecord(S.dateKey, { time: givenUp ? null : timeSec.toFixed(1), score });
+    saveTQScore(S.dateKey, score);
+    scoreEl.innerHTML = `Score &nbsp;<strong>${Math.round(score)}</strong>`;
+    againBtn.style.display = 'none';
+  } else {
+    const PRACTICE_EXPECT = { quick: 60, challenge: 120, miserable: 300 };
+    const expect = PRACTICE_EXPECT[S.mode] || 120;
+    const score = givenUp ? 0 : (expect / Math.max(timeSec, 0.1)) * 100;
+    scoreEl.innerHTML = `Score &nbsp;<strong>${Math.round(score)}</strong>`;
+    againBtn.style.display = '';
+    againBtn.onclick = () => startGame(S.mode);
+  }
+
+  if (givenUp) {
+    solutionEl.style.display = 'block';
+    solutionEl.appendChild(buildSolutionReveal());
+  } else {
+    solutionEl.style.display = 'none';
+  }
+}
+
+function showMenu() {
+  pauseTimer(); pausedElapsed = 0;
+  document.getElementById('game').style.display = 'none';
+  document.getElementById('result').style.display = 'none';
+  document.getElementById('menu').style.display = 'flex';
+  updateMenuTQ();
+}
+
+updateMenuTQ();
+</script>
+</body>
+</html>
