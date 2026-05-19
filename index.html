@@ -76,11 +76,13 @@ body {
 .ios .puzzle-wrap { padding: 10px; max-width: 100%; }
 .ios .puzzle-grid {
   gap: 6px;
-  max-width: min(100%, 62vmin);
+  max-width: min(100%, 75vmin);
   margin: 0 auto;
 }
-.ios .pattern-cell { padding: 6px; min-width: 0; }
-.ios .pattern-cell.answer-cell { padding: 6px; }
+/* Force every cell to be square — iOS Safari's aspect-ratio + grid + differing
+   border widths combo can break the answer cell otherwise. */
+.ios .pattern-cell { padding: 6px; min-width: 0; aspect-ratio: 1 / 1; width: 100%; height: auto; }
+.ios .pattern-cell.answer-cell { padding: 6px; min-width: 0; aspect-ratio: 1 / 1; width: 100%; height: auto; }
 .ios .px-grid { gap: 3px; }
 .ios .puzzle-hint { margin-top: 4px; }
 
@@ -308,12 +310,12 @@ body {
 .res-btn:hover { background: var(--bg-dark); color: var(--bg-light); }
 
 /* ── HELP MODAL ── */
-#helpModal {
+#helpModal, #welcomeModal {
   display: none; position: fixed; inset: 0;
   background: rgba(0,0,0,0.45); z-index: 100;
   align-items: center; justify-content: center; padding: 16px;
 }
-#helpModal.open { display: flex; }
+#helpModal.open, #welcomeModal.open { display: flex; }
 
 .help-box {
   background: var(--panel); border: 1px solid var(--border);
@@ -560,6 +562,22 @@ body {
         <button class="res-btn" id="againBtn">Play Again</button>
         <button class="res-btn" onclick="showMenu()">Menu</button>
       </div>
+    </div>
+  </div>
+</div>
+
+<!-- WELCOME MODAL (first-time visitors) -->
+<div id="welcomeModal">
+  <div class="help-box">
+    <div class="help-header">
+      <div class="help-title">Welcome to Thunkle!</div>
+    </div>
+    <div class="help-intro">
+      Figure out the rule and fill in the missing pattern. For example, here the patterns are added together.
+    </div>
+    <div id="welcomeExample"></div>
+    <div style="display:flex;justify-content:center;">
+      <button class="res-btn" onclick="closeWelcome()">Got it</button>
     </div>
   </div>
 </div>
@@ -959,6 +977,43 @@ function openHelp() { buildHelpExamples(); pauseTimer(); document.getElementById
 function closeHelp() { document.getElementById('helpModal').classList.remove('open'); resumeTimer(); }
 document.getElementById('helpModal').addEventListener('click', function(e){ if(e.target===this) closeHelp(); });
 
+// ── WELCOME (first-time only) ────────────────────────────────────────────────
+function buildWelcomeExample() {
+  const container = document.getElementById('welcomeExample');
+  container.innerHTML = '';
+  container.style.cssText = 'display:flex;justify-content:center;';
+  const A = new Uint8Array([1,0,0, 0,1,0, 0,0,1]);
+  const B = new Uint8Array([0,0,1, 0,1,0, 1,0,0]);
+  const C = applyOp(A, B, 'OR', 3);
+  const ex = document.createElement('div');
+  ex.className = 'op-example';
+  function sym(pixels, label) {
+    const w = document.createElement('div'); w.className = 'ex-sym';
+    w.appendChild(makePxGrid(pixels, 3, 'ex-px-grid'));
+    const l = document.createElement('div'); l.className = 'ex-lbl'; l.textContent = label;
+    w.appendChild(l); return w;
+  }
+  function txt(t) {
+    const d = document.createElement('div'); d.className = 'ex-op-txt'; d.textContent = t; return d;
+  }
+  ex.appendChild(sym(A,'A'));
+  ex.appendChild(txt('+'));
+  ex.appendChild(sym(B,'B'));
+  ex.appendChild(txt('='));
+  ex.appendChild(sym(C,'Result'));
+  container.appendChild(ex);
+}
+function closeWelcome() {
+  document.getElementById('welcomeModal').classList.remove('open');
+  localStorage.setItem('thunkle_visited', '1');
+}
+function maybeShowWelcome() {
+  if (localStorage.getItem('thunkle_visited')) return;
+  buildWelcomeExample();
+  document.getElementById('welcomeModal').classList.add('open');
+}
+document.getElementById('welcomeModal').addEventListener('click', function(e){ if(e.target===this) closeWelcome(); });
+
 // ── FLOW ──────────────────────────────────────────────────────────────────────
 function revealHint() {
   const hb = document.getElementById('hintBar');
@@ -1059,6 +1114,7 @@ function showMenu() {
 }
 
 updateMenuTQ();
+maybeShowWelcome();
 </script>
 </body>
 </html>
