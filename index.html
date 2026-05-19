@@ -401,27 +401,30 @@ body {
 }
 
 .byline {
-  font-size: 0.72rem;
+  font-size: 0.92rem;
   color: var(--ink-dim);
   font-style: italic;
   text-align: center;
   flex: 1;
 }
 
+.how-btn { justify-content: center; }
+.how-btn .mode-name { text-align: center; }
+
 .steam-promo {
   display: flex;
   flex-direction: column;
   align-items: center;
-  gap: 6px;
+  gap: 8px;
   text-decoration: none;
   color: var(--ink-mid);
-  margin-top: 8px;
-  padding: 10px;
-  border: 1px solid var(--border-lt);
-  background: var(--panel);
-  transition: background 0.1s;
+  margin-top: 16px;
+  padding: 0;
+  border: none;
+  background: none;
+  transition: opacity 0.15s;
 }
-.steam-promo:hover { background: var(--bg-mid); }
+.steam-promo:hover { opacity: 0.75; }
 .steam-promo-img {
   width: 100%;
   max-width: 100%;
@@ -429,9 +432,10 @@ body {
   display: block;
 }
 .steam-promo-text {
-  font-size: 0.78rem;
+  font-size: 0.85rem;
   letter-spacing: 0.05em;
   text-align: center;
+  font-style: italic;
 }
 
 .px, .answer-cell, .puzzle-wrap, .pattern-cell {
@@ -559,9 +563,12 @@ body {
       <div class="mode-tag">Hard</div>
     </button>
 
+    <button class="mode-btn how-btn" onclick="openHelp()">
+      <div class="mode-name">How do I Thunkle?</div>
+    </button>
+
     <div class="menu-footer">
-      <div class="byline">by GabeMakeGames</div>
-      <button class="help-btn menu-help-btn" onclick="openHelp()">?</button>
+      <div class="byline">by GabeMakeGame</div>
     </div>
 
     <a class="steam-promo" href="https://store.steampowered.com/app/4079680/The_Last_Wisper/" target="_blank" rel="noopener">
