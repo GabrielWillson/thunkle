@@ -408,6 +408,32 @@ body {
   flex: 1;
 }
 
+.steam-promo {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 6px;
+  text-decoration: none;
+  color: var(--ink-mid);
+  margin-top: 8px;
+  padding: 10px;
+  border: 1px solid var(--border-lt);
+  background: var(--panel);
+  transition: background 0.1s;
+}
+.steam-promo:hover { background: var(--bg-mid); }
+.steam-promo-img {
+  width: 100%;
+  max-width: 100%;
+  height: auto;
+  display: block;
+}
+.steam-promo-text {
+  font-size: 0.78rem;
+  letter-spacing: 0.05em;
+  text-align: center;
+}
+
 .px, .answer-cell, .puzzle-wrap, .pattern-cell {
   user-select: none;
   -webkit-user-select: none;
@@ -537,6 +563,11 @@ body {
       <div class="byline">by GabeMakeGames</div>
       <button class="help-btn menu-help-btn" onclick="openHelp()">?</button>
     </div>
+
+    <a class="steam-promo" href="https://store.steampowered.com/app/4079680/The_Last_Wisper/" target="_blank" rel="noopener">
+      <img src="Footer.png" alt="The Last Wisper" class="steam-promo-img">
+      <div class="steam-promo-text">Check out my game on Steam</div>
+    </a>
   </div>
 
   <!-- GAME -->
