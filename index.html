@@ -74,16 +74,32 @@ body {
 /* iOS-only sizing: shrink the puzzle so it fits comfortably in Safari */
 .ios body { padding: 12px 10px 24px; }
 .ios .puzzle-wrap { padding: 10px; max-width: 100%; }
+/* iOS: square the whole grid + use explicit rows. This avoids aspect-ratio
+   on individual cells (which Safari mis-sizes when border widths differ). */
 .ios .puzzle-grid {
   gap: 6px;
-  max-width: min(100%, 75vmin);
+  width: min(100%, 75vmin);
+  height: min(100%, 75vmin);
+  aspect-ratio: 1 / 1;
+  grid-template-rows: repeat(3, 1fr);
   margin: 0 auto;
 }
-/* Force every cell to be square — iOS Safari's aspect-ratio + grid + differing
-   border widths combo can break the answer cell otherwise. */
-.ios .pattern-cell { padding: 6px; min-width: 0; aspect-ratio: 1 / 1; width: 100%; height: auto; }
-.ios .pattern-cell.answer-cell { padding: 6px; min-width: 0; aspect-ratio: 1 / 1; width: 100%; height: auto; }
-.ios .px-grid { gap: 3px; }
+.ios .pattern-cell,
+.ios .pattern-cell.answer-cell {
+  padding: 6px;
+  width: 100%;
+  height: 100%;
+  min-width: 0;
+  min-height: 0;
+  aspect-ratio: auto;
+}
+.ios .px-grid {
+  gap: 3px;
+  aspect-ratio: 1 / 1;
+  width: 100%;
+  height: 100%;
+}
+.ios .px { aspect-ratio: auto; }
 .ios .puzzle-hint { margin-top: 4px; }
 
 #app {
